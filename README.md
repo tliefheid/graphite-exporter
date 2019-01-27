@@ -60,14 +60,14 @@ graphite_exporter_external_graphite{target="external.graphite.query"} 65.0
 
 ## ToDo
 
-- make http port customizable
+- ~~make http port customizable~~
 - custom seperator for labels
 - add labels at global level
-- make namespace customizable, both globally and per metric
+- ~~make namespace customizable, both globally and per metric~~
 - wildcard labels
 - add tests
 - add Dockerfile
-- make metric endpoint customizable
+- ~~make metric endpoint customizable~~
 
 ### Wildcard label
 
