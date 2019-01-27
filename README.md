@@ -8,9 +8,24 @@ You provide graphite queries to the exporter. If you call the metrics endpoint, 
 
 You can define a global graphite instance, which you can override for each metric
 
+minimal config:
+
+```YAML
+---
+graphite: http://graphite.instance.com:1234/
+metrics:
+  - name: foo
+    query: some.graphite.query.*
+```
+
+extended config:
+
 ```YAML
 ---
 graphite: http://graphite.instance.com/
+http_port: 9009 # default: 8080
+http_endpoint: /custom/metric/endpoint # default: /metrics
+namespace: custom_namespace # default: graphite_exporter
 
 metrics:
   - name: foo
@@ -23,6 +38,7 @@ metrics:
       - 'label1: value1'
       - 'label2: value2'
   - name: external graphite
+    namespace: metric_specific_namespace
     graphite: http://external.graphite.instance.com/
     query: external.graphite.query
 ```

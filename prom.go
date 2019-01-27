@@ -22,7 +22,7 @@ func buildGauge(m Metric) prometheus.GaugeVec {
 	}
 	g := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   "graphite_exporter",
+			Namespace:   m.Namespace,
 			ConstLabels: lblMap,
 			Name:        m.Name,
 		},

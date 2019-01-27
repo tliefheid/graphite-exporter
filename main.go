@@ -11,6 +11,11 @@ var (
 	config   = Config{}
 	graphite = Graphite{}
 	gauges   = make(map[string]prometheus.GaugeVec)
+	// HTTPPort exposed metrics port
+	HTTPPort = 8080
+	// HTTPEndpoint exposed metrics endpoint
+	HTTPEndpoint = "/metrics"
+	namespace    = "graphite_exporter"
 )
 
 func collectMetrics() {
@@ -28,7 +33,6 @@ func collectMetrics() {
 
 func httpWrapper(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("collecting metrics")
 		collectMetrics()
 		h.ServeHTTP(w, r)
 	})
@@ -39,8 +43,8 @@ func main() {
 	config = getConfig()
 	collectMetrics()
 
-	http.Handle("/metrics", httpWrapper(prometheus.Handler()))
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	http.Handle(getHTTPEndoint(), httpWrapper(prometheus.Handler()))
+	log.Fatal(http.ListenAndServe(getHTTPPort(), nil))
 
 }
 
