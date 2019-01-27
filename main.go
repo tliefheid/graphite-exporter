@@ -44,6 +44,15 @@ func main() {
 	collectMetrics()
 
 	http.Handle(getHTTPEndoint(), httpWrapper(prometheus.Handler()))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`<html>
+			<head><title>Graphite-Exporter</title></head>
+			<body>
+			<h1>Graphite Exporter</h1>
+			<p><a href="` + HTTPEndpoint + `">Metrics</a></p>
+			</body>
+			</html>`))
+	})
 	log.Fatal(http.ListenAndServe(getHTTPPort(), nil))
 
 }
