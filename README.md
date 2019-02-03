@@ -13,6 +13,28 @@ docker run -d \
 tomldev/graphite-exporter
 ```
 
+or use a compose file:
+
+```YAML
+version: '3.3'
+
+networks:
+  networkname:
+    external: true
+
+services:
+  graphiteexporter:
+    image: tomldev/graphite-exporter:v1.0.0
+    networks:
+      - networkname
+    ports:
+      - "9999:8080"
+    volumes:
+      - ./config.yml:/app/config.yml
+```
+
+use docker-compose (`docker-compose up -d`) or a stack deploy to a swarm cluster (`docker stack deploy --compose-file docker-compose.yml STACKNAME`)
+
 ## Configuration
 
 You can define a global graphite instance, which you can override for each metric
