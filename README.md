@@ -4,7 +4,16 @@ This is a exporter for prometheus. Unlike the official exporter, it queries grap
 
 You provide graphite queries to the exporter. If you call the metrics endpoint, it queries graphite and exposes the results.
 
-## config.yml
+## Run in Docker
+
+```Shell
+docker run -d \
+-v /path/to/config.yml:/app/config.yml:ro \
+-p 8080:8080 \
+tomldev/graphite-exporter
+```
+
+## Configuration
 
 You can define a global graphite instance, which you can override for each metric
 
@@ -38,7 +47,7 @@ metrics:
       - 'label1: value1'
       - 'label2: value2'
   - name: external graphite
-    namespace: metric_specific_namespace
+    namespace: metric_specific_namespace # overwrite at metric level
     graphite: http://external.graphite.instance.com/
     query: external.graphite.query
 ```
@@ -56,31 +65,4 @@ graphite_exporter_foo{label1="value1", target="some.graphite.query.query1"} 10.0
 graphite_exporter_foo{label1="value1", target="some.graphite.query.query2"} 20.0
 graphite_exporter_bar{label1="value1", label2="value2", target="some.other.graphite.query"} 42.0
 graphite_exporter_external_graphite{target="external.graphite.query"} 65.0
-```
-
-## ToDo
-
-- ~~make http port customizable~~
-- custom seperator for labels
-- add labels at global level
-- ~~make namespace customizable, both globally and per metric~~
-- wildcard labels
-- add tests
-- add Dockerfile
-- ~~make metric endpoint customizable~~
-
-### Wildcard label
-
-Lets say a sensor has 2 values in graphite, humidity and temperature.
-
-```txt
-sensor.values.humidity = 36.0
-sensor.values.temperature = 18.0
-```
-
-If you do a query like `sensor.values.*` you might want the result to be:
-
-```Go
-graphite_exporter_sensor{target="sensor.values.humidity", type="humidity"} 36.0
-graphite_exporter_sensor{target="sensor.values.temperature", type="temperature"} 18.0
 ```
