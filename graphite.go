@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -47,7 +48,14 @@ func getFromTime() string {
 }
 
 func getResponse(url string) []GraphiteResponse {
-	response, err := http.Get(url)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	response, err := client.Get(url)
+
+	// response, err := http.Get(url)
 	check(err)
 
 	bytes := getBytes(response)
