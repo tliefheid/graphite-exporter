@@ -9,6 +9,7 @@
 - ~~add Dockerfile~~
 - ~~make metric endpoint customizable~~
 - ssl/tls support
+- time offset for graphite
 
 ## Wildcard label idea
 
