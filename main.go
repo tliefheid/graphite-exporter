@@ -29,6 +29,7 @@ func collectMetrics() {
 			g.WithLabelValues(target).Set(val)
 		}
 	}
+	log.Println("done collecting metrics\n")
 }
 
 func httpWrapper(h http.Handler) http.Handler {
@@ -41,6 +42,8 @@ func httpWrapper(h http.Handler) http.Handler {
 func main() {
 	log.Println("Started Main")
 	config = getConfig()
+
+	graphite.skiptls = config.SkipTLS
 	collectMetrics()
 
 	http.Handle(getHTTPEndpoint(), httpWrapper(prometheus.Handler()))

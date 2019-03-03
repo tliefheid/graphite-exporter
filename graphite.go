@@ -12,7 +12,8 @@ import (
 
 // Graphite strucs
 type Graphite struct {
-	url string
+	url     string
+	skiptls bool
 }
 
 // GraphiteResponse struct for graphite json response
@@ -27,7 +28,7 @@ type GraphiteResponse struct {
 func (g Graphite) getMetric(m Metric) []GraphiteResponse {
 	url := buildURL(m)
 
-	gr := getResponse(url)
+	gr := getResponse(url, g.skiptls)
 
 	if len(gr) == 0 {
 		log.Println(" - no data found in graphite for: " + m.Name)
@@ -53,11 +54,11 @@ func getFromTime() string {
 	return fmt.Sprintf("%v", unix)
 }
 
-func getResponse(url string) []GraphiteResponse {
-
+func getResponse(url string, skip bool) []GraphiteResponse {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: skip},
 	}
+
 	client := &http.Client{Transport: tr}
 	response, err := client.Get(url)
 
