@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -25,7 +26,12 @@ type GraphiteResponse struct {
 
 func (g Graphite) getMetric(m Metric) []GraphiteResponse {
 	url := buildURL(m)
+
 	gr := getResponse(url)
+
+	if len(gr) == 0 {
+		log.Println(" - no data found in graphite for: " + m.Name)
+	}
 	return gr
 }
 
