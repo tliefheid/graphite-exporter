@@ -43,7 +43,7 @@ func main() {
 	config = getConfig()
 	collectMetrics()
 
-	http.Handle(getHTTPEndoint(), httpWrapper(prometheus.Handler()))
+	http.Handle(getHTTPEndpoint(), httpWrapper(prometheus.Handler()))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`<html>
 			<head><title>Graphite-Exporter</title></head>
