@@ -26,12 +26,13 @@ type GraphiteResponse struct {
 }
 
 func (g Graphite) getMetric(m Metric) []GraphiteResponse {
+	logMessage("   - getting metrics for: %s", m.Name)
 	url := buildURL(m)
 
 	gr := getResponse(url, g.skiptls)
 
 	if len(gr) == 0 {
-		log.Println(" - no data found in graphite for: " + m.Name)
+		log.Println("   - no data found in graphite for: " + m.Name)
 	}
 	return gr
 }
@@ -46,6 +47,7 @@ func buildURL(m Metric) string {
 	url += m.Query
 	url += "&format=json&from="
 	url += getFromTime()
+	logMessage("   - build graphite url: %s", url)
 	return url
 }
 
@@ -68,6 +70,7 @@ func getResponse(url string, skip bool) []GraphiteResponse {
 	bytes := getBytes(response)
 	var gr []GraphiteResponse
 	json.Unmarshal(bytes, &gr)
+	logMessage("   - graphite response: %+v", gr)
 	return gr
 }
 

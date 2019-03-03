@@ -24,6 +24,7 @@ type Config struct {
 	HTTPEndpoint string   `yaml:"http_endpoint"`
 	Namespace    string   `yaml:"namespace"`
 	SkipTLS      bool     `yaml:"skip_tls"`
+	Debug        bool     `yaml:"debug"`
 	Metrics      []Metric `yaml:"metrics"`
 }
 
@@ -44,6 +45,9 @@ func getConfig() Config {
 		config.SkipTLS = true
 	} else {
 		config.SkipTLS = false
+	}
+	if c.Debug == true {
+		DebugLogging = true
 	}
 
 	if c.HTTPEndpoint != "" {

@@ -16,20 +16,25 @@ var (
 	// HTTPEndpoint exposed metrics endpoint
 	HTTPEndpoint = "/metrics"
 	namespace    = "graphite_exporter"
+	// DebugLogging global tracker for extended logging
+	DebugLogging = false
 )
 
 func collectMetrics() {
-	log.Println("collecting metrics")
 	for _, m := range config.Metrics {
+		logMessage("collecting metrics for: %s", m.Name)
+		logMessage(" - getting prometheus gauge")
 		g := getGauge(m)
+		logMessage(" - getting metrics from graphite")
 		respSlice := graphite.getMetric(m)
 		for _, gr := range respSlice {
 			target := trimAndReplace(gr.Target)
 			val := gr.getLastValue()
+			logMessage(" - setting value %f for gauge: %+v", val, target)
 			g.WithLabelValues(target).Set(val)
 		}
 	}
-	log.Println("done collecting metrics\n")
+	log.Printf("done collecting metrics\n\n")
 }
 
 func httpWrapper(h http.Handler) http.Handler {

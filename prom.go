@@ -7,6 +7,7 @@ import (
 func findGauge(name string) (bool, prometheus.GaugeVec) {
 	for k, v := range gauges {
 		if k == name {
+			logMessage(" - found a gauge")
 			return true, v
 		}
 	}
@@ -32,11 +33,12 @@ func buildGauge(m Metric) prometheus.GaugeVec {
 	)
 	prometheus.MustRegister(g)
 	gauges[m.Name] = *g
+	logMessage("   - new gauge build complete: %s", m.Name)
 	return *g
 }
 
 func getGauge(m Metric) prometheus.GaugeVec {
-	// fmt.Printf("gauges: %v\n", gauges)
+	logMessage("   - getGauge() for: %s", m.Name)
 	name := trimAndReplace(m.Name)
 	found, g := findGauge(name)
 	if found {
