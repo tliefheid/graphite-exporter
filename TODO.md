@@ -8,6 +8,7 @@
 - add tests
 - ~~add Dockerfile~~
 - ~~make metric endpoint customizable~~
+- ssl/tls support
 
 ## Wildcard label idea
 
