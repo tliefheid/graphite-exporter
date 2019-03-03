@@ -18,7 +18,7 @@ func getKeyValue(input string, sep string) (string, string) {
 	return key, val
 }
 
-func getHTTPEndoint() string {
+func getHTTPEndpoint() string {
 	endpoint := ""
 	if !strings.HasPrefix(HTTPEndpoint, "/") {
 		endpoint += "/"

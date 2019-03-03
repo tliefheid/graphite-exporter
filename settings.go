@@ -23,6 +23,7 @@ type Config struct {
 	HTTPPort     int      `yaml:"http_port"`
 	HTTPEndpoint string   `yaml:"http_endpoint"`
 	Namespace    string   `yaml:"namespace"`
+	SkipTLS      bool     `yaml:"skip_tls"`
 	Metrics      []Metric `yaml:"metrics"`
 }
 
@@ -30,12 +31,23 @@ func getConfig() Config {
 	log.Println("getting config")
 	yml, err := ioutil.ReadFile("config.yml")
 	check(err)
+	// marshalled config from file
 	c := Config{}
+
+	// final config
 	config := Config{GraphiteURL: c.GraphiteURL}
+
 	err = yaml.Unmarshal(yml, &c)
 	check(err)
 
+	if c.SkipTLS == true {
+		config.SkipTLS = true
+	} else {
+		config.SkipTLS = false
+	}
+
 	if c.HTTPEndpoint != "" {
+		// overwriting global setting
 		HTTPEndpoint = c.HTTPEndpoint
 		log.Println("  - Setting metrics endpoint to: " + HTTPEndpoint)
 	}

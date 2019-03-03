@@ -33,13 +33,11 @@ services:
       - ./config.yml:/app/config.yml
 ```
 
-use docker-compose (`docker-compose up -d`) or a stack deploy to a swarm cluster (`docker stack deploy --compose-file docker-compose.yml STACKNAME`)
+Use docker-compose (`docker-compose up -d`) or a stack deploy to a swarm cluster (`docker stack deploy --compose-file docker-compose.yml STACKNAME`)
 
 ## Configuration
 
-You can define a global graphite instance, which you can override for each metric
-
-minimal config:
+**minimal config:**
 
 ```YAML
 ---
@@ -49,7 +47,7 @@ metrics:
     query: some.graphite.query.*
 ```
 
-extended config:
+**extended config:**
 
 ```YAML
 ---
@@ -57,6 +55,7 @@ graphite: http://graphite.instance.com/
 http_port: 9009 # default: 8080
 http_endpoint: /custom/metric/endpoint # default: /metrics
 namespace: custom_namespace # default: graphite_exporter
+skip_tls: true # default: false
 
 metrics:
   - name: foo
@@ -73,6 +72,20 @@ metrics:
     graphite: http://external.graphite.instance.com/
     query: external.graphite.query
 ```
+
+**explanation:**
+
+- graphite: Global graphite connection.
+- http_port: The port on which the metrics will be exposed.
+- http_endpoint: On which endpoint you want to expose your metrics
+- namespace: global metric name prefix
+- skip_tls: skip tls verification on your graphite instance
+- metrics:
+  - name: name of the metric
+  - query: the graphite query
+  - labels: add custom key:value labels to your metric
+  - graphite: overwrite graphite connection for a metric
+  - namespace: overwrite global namespace for a metric
 
 All spaces in the names and labels will be trimmed and the remaining spaces will be replaced by an `_`
 
