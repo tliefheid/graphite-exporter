@@ -29,9 +29,13 @@ func collectMetrics() {
 		respSlice := graphite.getMetric(m)
 		for _, gr := range respSlice {
 			target := trimAndReplace(gr.Target)
-			val := gr.getLastValue()
-			logMessage(" - setting value %f for gauge: %+v", val, target)
-			g.WithLabelValues(target).Set(val)
+			val, failed := gr.getLastValue()
+			if (failed == true){
+				logMessage(" - no value was found")
+			} else {
+				logMessage(" - setting value %f for gauge: %+v", val, target)
+				g.WithLabelValues(target).Set(val)
+			}
 		}
 	}
 	log.Printf("done collecting metrics\n\n")
@@ -48,7 +52,8 @@ func main() {
 	log.Println("Started Main")
 	config = getConfig()
 
-	graphite.skiptls = config.SkipTLS
+	// graphite.ssl.skiptls = config.SSLConfig.SkipTLS
+	graphite.ssl = config.SSLConfig
 	collectMetrics()
 
 	http.Handle(getHTTPEndpoint(), httpWrapper(prometheus.Handler()))
