@@ -13,12 +13,6 @@ import (
 	"time"
 )
 
-// type sslConfig struct {
-// 	skiptls         bool
-// 	credentials     string
-// 	certificatePath string
-// }
-
 // Graphite struct
 type Graphite struct {
 	url string
