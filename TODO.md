@@ -8,8 +8,9 @@
 - add tests
 - ~~add Dockerfile~~
 - ~~make metric endpoint customizable~~
-- ssl/tls support
+- ~~ssl/tls support~~
 - time offset for graphite
+- clean up settings --> create new settings mapper / single global settings controller thingy
 
 ## Wildcard label idea
 
