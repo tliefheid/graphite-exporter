@@ -17,16 +17,25 @@ type Metric struct {
 	Namespace   string   `yaml:"namespace,omitempty"`
 }
 
+// SSLConfig ssl configuration
+type SSLConfig struct {
+	SkipTLS         bool   `yaml:"skip_tls,omitempty"`
+	CertificatePath string `yaml:"certificate_path,omitempty"`
+	Credentials     string `yaml:"credentials,omitempty"`
+}
+
 // Config struct
 type Config struct {
-	GraphiteURL  string   `yaml:"graphite"`
-	HTTPPort     int      `yaml:"http_port"`
-	HTTPEndpoint string   `yaml:"http_endpoint"`
-	Namespace    string   `yaml:"namespace"`
-	SkipTLS      bool     `yaml:"skip_tls"`
-	Debug        bool     `yaml:"debug"`
-	Metrics      []Metric `yaml:"metrics"`
+	GraphiteURL  string    `yaml:"graphite"`
+	HTTPPort     int       `yaml:"http_port"`
+	HTTPEndpoint string    `yaml:"http_endpoint"`
+	Namespace    string    `yaml:"namespace"`
+	SSLConfig    SSLConfig `yaml:"ssl"`
+	Debug        bool      `yaml:"debug"`
+	Metrics      []Metric  `yaml:"metrics"`
 }
+
+// SkipTLS      bool     `yaml:"skip_tls"`
 
 func getConfig() Config {
 	log.Println("getting config")
@@ -37,15 +46,16 @@ func getConfig() Config {
 
 	// final config
 	config := Config{GraphiteURL: c.GraphiteURL}
-
+	
 	err = yaml.Unmarshal(yml, &c)
 	check(err)
 
-	if c.SkipTLS == true {
-		config.SkipTLS = true
+	if c.SSLConfig.SkipTLS == true {
+		config.SSLConfig.SkipTLS = true
 	} else {
-		config.SkipTLS = false
+		config.SSLConfig.SkipTLS = false
 	}
+	config.SSLConfig = c.SSLConfig
 	if c.Debug == true {
 		DebugLogging = true
 	}
@@ -78,5 +88,6 @@ func getConfig() Config {
 		data.Name = trimAndReplace(data.Name)
 		config.Metrics = append(config.Metrics, data)
 	}
+	logMessage("config\n%+v\n", config)
 	return config
 }
