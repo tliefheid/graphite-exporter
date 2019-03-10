@@ -20,7 +20,6 @@
 endpoint: /metrics/foo
 will query only the targets that contain the name foo and only see those metrics
 
-
 ## Wildcard label idea
 
 Lets say a sensor has 2 values in graphite, humidity and temperature.
