@@ -1,44 +1,27 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"net/http"
+	"os"
 
+	logging "github.com/op/go-logging"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
-	config   = Config{}
-	graphite = Graphite{}
-	gauges   = make(map[string]prometheus.GaugeVec)
-	// HTTPPort exposed metrics port
-	HTTPPort = 8080
-	// HTTPEndpoint exposed metrics endpoint
-	HTTPEndpoint = "/metrics"
-	namespace    = "graphite_exporter"
-	// DebugLogging global tracker for extended logging
-	DebugLogging = false
+	// Log - use same logger throughout the project
+	Log          = logging.MustGetLogger("logger")
+	format       = logging.MustStringFormatter(`%{color}%{time:15:04:05.000} %{level} %{shortfunc}%{color:reset} | %{message}`)
+	backend1     = logging.NewLogBackend(os.Stdout, "", 0)
+	formattedLog = logging.NewBackendFormatter(backend1, format)
 )
 
 func collectMetrics() {
-	for _, m := range config.Metrics {
-		logMessage("collecting metrics for: %s", m.Name)
-		logMessage(" - getting prometheus gauge")
-		g := getGauge(m)
-		logMessage(" - getting metrics from graphite")
-		respSlice := graphite.getMetric(m)
-		for _, gr := range respSlice {
-			target := trimAndReplace(gr.Target)
-			val, failed := gr.getLastValue()
-			if (failed == true){
-				logMessage(" - no value was found")
-			} else {
-				logMessage(" - setting value %f for gauge: %+v", val, target)
-				g.WithLabelValues(target).Set(val)
-			}
-		}
+	fmt.Println()
+	for _, t := range cfg.Targets {
+		t.getMetrics()
 	}
-	log.Printf("done collecting metrics\n\n")
 }
 
 func httpWrapper(h http.Handler) http.Handler {
@@ -49,11 +32,13 @@ func httpWrapper(h http.Handler) http.Handler {
 }
 
 func main() {
-	log.Println("Started Main")
-	config = getConfig()
+	logging.SetBackend(formattedLog)
+	logging.SetLevel(logging.NOTICE, "logger")
+	getConfig()
+	logLevel := getLogLevel(cfg.Server.LogLevel)
+	logging.SetLevel(logLevel, "logger")
+	Log.Info("Started Main")
 
-	// graphite.ssl.skiptls = config.SSLConfig.SkipTLS
-	graphite.ssl = config.SSLConfig
 	collectMetrics()
 
 	http.Handle(getHTTPEndpoint(), httpWrapper(prometheus.Handler()))
@@ -62,11 +47,12 @@ func main() {
 			<head><title>Graphite-Exporter</title></head>
 			<body>
 			<h1>Graphite Exporter</h1>
-			<p><a href="` + HTTPEndpoint + `">Metrics</a></p>
+			<p><a href="` + getHTTPEndpoint() + `">Metrics</a></p>
 			</body>
 			</html>`))
 	})
-	log.Fatal(http.ListenAndServe(getHTTPPort(), nil))
+	Log.Info("Starting http server")
+	Log.Critical(http.ListenAndServe(getHTTPPort(), nil))
 
 }
 
