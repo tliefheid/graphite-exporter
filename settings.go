@@ -3,91 +3,110 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
+	"reflect"
 
 	"gopkg.in/yaml.v2"
 )
 
-// Metric single metric config
-type Metric struct {
-	Name        string   `yaml:"name"`
-	Query       string   `yaml:"query"`
-	Labels      []string `yaml:"labels,omitempty"`
-	GraphiteURL string   `yaml:"graphite,omitempty"`
-	Namespace   string   `yaml:"namespace,omitempty"`
+var (
+	cfg       = config{}
+	graphites = make(map[string]Graphite)
+	targets   = make(map[string]Target)
+)
+
+type Ssl struct {
+	Credentials string `yaml:"credentials,omitempty"`
+	Certificate string `yaml:"certificate,omitempty"`
+	SkipTLS     bool   `yaml:"skip_tls,omitempty"`
+}
+type Graphite struct {
+	Name      string   `yaml:"name"`
+	URL       string   `yaml:"url"`
+	Labels    []string `yaml:"labels,omitempty"`
+	Ssl       Ssl      `yaml:"ssl,omitempty"`
+	Namespace string   `yaml:"namespace,omitempty"`
+}
+type Target struct {
+	Name         string   `yaml:"name"`
+	GraphiteName string   `yaml:"graphite"`
+	Query        string   `yaml:"query"`
+	Labels       []string `yaml:"labels,omitempty"`
+	Namespace    string   `yaml:"namespace,omitempty"`
+}
+type server struct {
+	Port     int    `yaml:"port,omitempty"`
+	Endpoint string `yaml:"endpoint,omitempty"`
+	LogLevel string `yaml:"log_level,omitempty"`
+}
+type config struct {
+	Graphite []Graphite `yaml:"graphite"`
+	Server   server     `yaml:"server"`
+	Targets  []Target   `yaml:"targets"`
 }
 
-// SSLConfig ssl configuration
-type SSLConfig struct {
-	SkipTLS         bool   `yaml:"skip_tls,omitempty"`
-	CertificatePath string `yaml:"certificate_path,omitempty"`
-	Credentials     string `yaml:"credentials,omitempty"`
+type GraphiteResponse struct {
+	Target string `json:"target"`
+	Tags   struct {
+		Name string `json:"name"`
+	} `json:"tags"`
+	Datapoints [][]float64 `json:"datapoints"`
 }
 
-// Config struct
-type Config struct {
-	GraphiteURL  string    `yaml:"graphite"`
-	HTTPPort     int       `yaml:"http_port"`
-	HTTPEndpoint string    `yaml:"http_endpoint"`
-	Namespace    string    `yaml:"namespace"`
-	SSLConfig    SSLConfig `yaml:"ssl"`
-	Debug        bool      `yaml:"debug"`
-	Metrics      []Metric  `yaml:"metrics"`
-}
-
-// SkipTLS      bool     `yaml:"skip_tls"`
-
-func getConfig() Config {
-	log.Println("getting config")
-	yml, err := ioutil.ReadFile("config.yml")
+func getConfig() {
+	Log.Info("Getting config")
+	yml, err := ioutil.ReadFile("./config/config.yml")
 	check(err)
-	// marshalled config from file
-	c := Config{}
 
-	// final config
-	config := Config{GraphiteURL: c.GraphiteURL}
-	
-	err = yaml.Unmarshal(yml, &c)
+	err = yaml.Unmarshal(yml, &cfg)
 	check(err)
-
-	if c.SSLConfig.SkipTLS == true {
-		config.SSLConfig.SkipTLS = true
-	} else {
-		config.SSLConfig.SkipTLS = false
-	}
-	config.SSLConfig = c.SSLConfig
-	if c.Debug == true {
-		DebugLogging = true
-	}
-
-	if c.HTTPEndpoint != "" {
-		// overwriting global setting
-		HTTPEndpoint = c.HTTPEndpoint
-		log.Println("  - Setting metrics endpoint to: " + HTTPEndpoint)
-	}
-
-	if c.HTTPPort != 0 && c.HTTPPort > 0 {
-		HTTPPort = c.HTTPPort
-		log.Println("  - Setting server port to: " + fmt.Sprintf("%v", HTTPPort))
-	}
-
-	if c.Namespace != "" {
-		namespace = trimAndReplace(c.Namespace)
-		log.Println("  - Setting custom global namespace to: " + namespace)
-	}
-
-	for _, data := range c.Metrics {
-		if data.GraphiteURL == "" {
-			data.GraphiteURL = c.GraphiteURL
+	Log.Debugf("config\n%+v\n", cfg)
+	for _, graphiteConfig := range cfg.Graphite {
+		if graphiteConfig.Name == "" {
+			panic("Config error: Graphite name can't be empty")
 		}
-		if data.Namespace == "" {
-			data.Namespace = namespace
+		if graphiteConfig.URL == "" {
+			panic("Config error: Graphite url can't be empty")
 		}
-		data.Namespace = trimAndReplace(data.Namespace)
+		name := trimAndReplace(graphiteConfig.Name)
+		_, found := graphites[name]
+		if found {
+			keys := reflect.ValueOf(graphites).MapKeys()
+			panic(fmt.Sprintf("you already defined a graphite instance with name: %v\nalready defined names: %v", name, keys))
+		}
+		// trimAndReplace(graphiteConfig.Name)
+		// no spaces or - in metric names
+		// no spaces or - in namespaces
+		trimAndReplaceRef(&graphiteConfig.Namespace)
 
-		data.Name = trimAndReplace(data.Name)
-		config.Metrics = append(config.Metrics, data)
+		graphites[graphiteConfig.Name] = graphiteConfig
+		graphiteConfig.init()
+
 	}
-	logMessage("config\n%+v\n", config)
-	return config
+
+	for _, target := range cfg.Targets {
+		trimAndReplaceRef(&target.Name)
+		trimAndReplaceRef(&target.Namespace)
+		g, ok := graphites[target.GraphiteName]
+		if !ok {
+			s := fmt.Sprintf("searched for graphite (%v) but couldnt find it for target (%v)", target.GraphiteName, target.Name)
+			panic(s)
+		}
+
+		target.init(g)
+	}
+}
+func getHTTPEndpoint() string {
+	endpoint := "/metrics"
+	if cfg.Server.Endpoint != "" {
+		endpoint = cfg.Server.Endpoint
+	}
+	return endpoint
+}
+func getHTTPPort() string {
+	port := 8080
+	if cfg.Server.Port != 0 && cfg.Server.Port > 0 {
+		port = cfg.Server.Port
+	}
+	p := fmt.Sprintf("%v", port)
+	return ":" + p
 }

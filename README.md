@@ -8,7 +8,7 @@ You provide graphite queries to the exporter. If you call the metrics endpoint, 
 
 ```Shell
 docker run -d \
--v /path/to/config.yml:/app/config.yml:ro \
+-v /path/to/config.yml:/app/config/config.yml:ro \
 -v /path/to/certificate/my-cert:/etc/certs/root.cer \
 -p 8080:8080 \
 tomldev/graphite-exporter
@@ -25,13 +25,13 @@ networks:
 
 services:
   graphiteexporter:
-    image: tomldev/graphite-exporter:v1.3.0
+    image: tomldev/graphite-exporter:v2.0.0
     networks:
       - networkname
     ports:
       - "9999:8080"
     volumes:
-      - ./config.yml:/app/config.yml
+      - ./config.yml:/app/config/config.yml
       - ./certs/my-cert.cer:/etc/certs/root.cer
 ```
 
@@ -43,62 +43,76 @@ Use docker-compose (`docker-compose up -d`) or a stack deploy to a swarm cluster
 
 ```YAML
 ---
-graphite: http://graphite.instance.com:1234/
-metrics:
+graphite:
+  - name: local
+    url: http://192.168.178.53:2999/
+
+targets:
   - name: foo
-    query: some.graphite.query.*
+    graphite: local
+    query: "some.graphite.query.*"
 ```
 
 **extended config:**
 
 ```YAML
 ---
-graphite: http://graphite.instance.com/
-http_port: 9009 # default: 8080
-http_endpoint: /custom/metric/endpoint # default: /metrics
-namespace: custom_namespace # default: graphite_exporter
-skip_tls: true # deprecated since 1.3.0
-debug: true # default false
+graphite:
+  - name: local
+    url: http://localhost:1234/
+    namespace: "graphite_exporter"
+  - name: external
+    url: https://graphite.instance.com/1234
+    ssl:
+      credentials: "user:pass"
+      certificate: "/etc/certs/root.cer"
+      skip_tls: true
 
-ssl:
-  credentials: 'username:password' # this will generate authorization header with 'Basic <base64 encoded credentials>'
-  certificate_path: '/etc/certs/root.cer' # path to a certificate
-  skip_tls: false # skip tls validation
+server:
+  port: 9000
+  endpoint: "/metrics"
+  log_level: info
 
-metrics:
+targets:
   - name: foo
-    query: some.graphite.query.*
+    graphite: local
+    query: "some.graphite.query.*"
     labels:
-      - 'label1: value1'
+      - "key: value"
+    namespace: "metric_namespace"
   - name: bar
-    query: some.other.graphite.query
-    labels:
-      - 'label1: value1'
-      - 'label2: value2'
-  - name: external graphite
-    namespace: metric_specific_namespace # overwrite at metric level
-    graphite: http://external.graphite.instance.com/
-    query: external.graphite.query
+    graphite: local
+    query: "some.other.*.query"
+  - name: foobar
+    graphite: external
+    namespace: foobar
 ```
 
 **explanation:**
 
-- graphite: Global graphite connection.
-- http_port: The port on which the metrics will be exposed.
-- http_endpoint: On which endpoint you want to expose your metrics
-- namespace: global metric name prefix
-- skip_tls: skip tls verification on your graphite instance (deprecated since 1.3.0)
-- debug: debug logging
-- ssl:
-  - credentials: when provided, the request to graphite will be send with an Authorization header with `Basic: <token>`. The token will be an base64 encoded string of the credentials
-  - certificate_path: when provided, the request to graphite will be send with the specified certificate
-  - skip_tls: skip tls verification on your graphite instance
-- metrics:
-  - name: name of the metric
-  - query: the graphite query
-  - labels: add custom key:value labels to your metric
-  - graphite: overwrite graphite connection for a metric
-  - namespace: overwrite global namespace for a metric
+- graphite: A sequence (array) of graphite connections.
+  - name: Name of the graphite connection. Give them a unique name.
+  - url: URL of the graphite instance.
+  - *namespace*: Default prefix for this graphite instance. The namespace will be prefixed to the metric name.
+  - *labels*: Add fixed labels to your metrics
+  - *ssl*: Config for SSL/TLS.
+    - *credentials*: When provided, the request to graphite will be send with an Authorization header with `Basic: <token>`. The token will be an base64 encoded string of the credentials.
+    - *certificate*: Set an certificate in the http client to graphite. It only supports one certificate file.
+    - *skip_tls*: Set the flag `InsecureSkipVerify` for the http client.
+
+- *server*: Settings for the local server to expose the metrics.
+  - *port*: On which port to expose the endpoint.
+  - *endpoint*: Set the endpoint on which the metrics are available.
+  - *log_level*: Set the log level of the app. Available options: Critical > Error > Warning > Notice > Info > Debug.
+
+- targets: Target config for the metrics to query in graphite.
+  - name: A unique name of your metric. Cannot contain spaces or hyphens.
+  - graphite: The name of the graphite connection to use.
+  - query: The graphite query to execute. Wildcard `*` is allowed.
+  - *namespace*: Default prefix for this target. The namespace will be prefixed to the metric name.
+  - *labels*: Add fixed labels to your metrics
+
+keys in *italics* are optional
 
 All spaces in the names and labels will be trimmed and the remaining spaces will be replaced by an `_`
 

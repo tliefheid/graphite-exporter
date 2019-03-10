@@ -2,7 +2,7 @@
 
 - ~~make http port customizable~~
 - custom seperator for labels
-- add labels at global level
+- ~~add labels at global level~~
 - ~~make namespace customizable, both globally and per metric~~
 - wildcard labels
 - add tests
@@ -10,7 +10,16 @@
 - ~~make metric endpoint customizable~~
 - ~~ssl/tls support~~
 - time offset for graphite
-- clean up settings --> create new settings mapper / single global settings controller thingy
+- ~~clean up settings --> create new settings mapper / single global settings controller thingy~~
+- add custom http headers
+- custom endpoint with specific metrics
+- set config file location
+
+## custom endpoint with specific metrics
+
+endpoint: /metrics/foo
+will query only the targets that contain the name foo and only see those metrics
+
 
 ## Wildcard label idea
 

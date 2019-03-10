@@ -7,89 +7,42 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 )
 
-// Graphite struct
-type Graphite struct {
-	url string
-	ssl SSLConfig
+var (
+	client = http.Client{}
+)
+
+func (g Graphite) init() {
+	g.createClient()
 }
 
-// GraphiteResponse struct for graphite json response
-type GraphiteResponse struct {
-	Target string `json:"target"`
-	Tags   struct {
-		Name string `json:"name"`
-	} `json:"tags"`
-	Datapoints [][]float64 `json:"datapoints"`
+func (g Graphite) createClient() {
+	Log.Info("creating HTTPS Client")
+	var tls = tls.Config{}
+	g.setTLSSkip(&tls)
+	g.setClientCertificate(&tls)
+	transport := &http.Transport{TLSClientConfig: &tls}
+	client = http.Client{Transport: transport}
 }
 
-func (g Graphite) getMetric(m Metric) []GraphiteResponse {
-	logMessage("   - getting metrics for: %s", m.Name)
-	url := buildURL(m)
-	client := getClient(g, url)
-	gr := getResponse(client, url, g.ssl.Credentials)
-
-	if len(gr) == 0 {
-		log.Println("   - no data found in graphite for: " + m.Name)
+func (g Graphite) setTLSSkip(tls *tls.Config) {
+	if g.Ssl.SkipTLS == true {
+		Log.Info("setting InsecureSkipVerify: true")
+		tls.InsecureSkipVerify = g.Ssl.SkipTLS
 	}
-	return gr
 }
 
-func buildURL(m Metric) string {
-	url := ""
-	url += m.GraphiteURL
-	if !strings.HasSuffix(url, "/") {
-		url += "/"
-	}
-	url += "render?target="
-	url += m.Query
-	url += "&format=json&from="
-	url += getFromTime()
-	logMessage("   - build graphite url: %s", url)
-	return url
-}
-
-func getFromTime() string {
-	t := time.Now().Unix()
-	// fmt.Printf("\ntime: %v\n", t)
-	unix := time.Now().Unix() - 120
-	// fmt.Printf("past: %v\n\n", unix)
-	logMessage("   - now: %v, query time (now-offset): %v", t, unix)
-	return fmt.Sprintf("%v", unix)
-}
-
-func getClient(graphite Graphite, url string) *http.Client {
-	hasPrefix := strings.HasPrefix(url, "https://")
-	if hasPrefix == true {
-		// https client
-		return createHTTPSClient(graphite.ssl)
-	}
-	// plain client
-	logMessage("  - creating plain http client")
-	return &http.Client{}
-
-}
-
-func createHTTPSClient(ssl SSLConfig) *http.Client {
-	logMessage("  - creating HTTPS Client")
-	var tls = &tls.Config{}
-	if ssl.SkipTLS == true {
-		// create client with insecureSkipVerify
-		logMessage("    - setting InsecureSkipVerify: true")
-		tls.InsecureSkipVerify = ssl.SkipTLS
-	}
-
-	if ssl.CertificatePath != "" {
-		// read certificate
-		logMessage("     - setting ssl certificate")
-		exists, _ := exists(ssl.CertificatePath)
+func (g Graphite) setClientCertificate(tls *tls.Config) {
+	path := g.Ssl.Certificate
+	if path != "" {
+		Log.Info("setting ssl certificate")
+		exists, _ := exists(path)
 		if exists == true {
-			dat, err := ioutil.ReadFile(ssl.CertificatePath)
+			dat, err := ioutil.ReadFile(path)
 			check(err)
 			rootPEM := string(dat)
 
@@ -100,38 +53,57 @@ func createHTTPSClient(ssl SSLConfig) *http.Client {
 			}
 			tls.RootCAs = certPool
 		} else {
-			logMessage("     - certificate not found")
+			Log.Warning("certificate not found")
 		}
 
 	}
-
-	transport := &http.Transport{TLSClientConfig: tls}
-	return &http.Client{Transport: transport}
-
 }
-
-func getResponse(client *http.Client, url string, credentials string) []GraphiteResponse {
-
+func (g Graphite) query(q string) []GraphiteResponse {
+	// build url
+	// build req
+	// check for extra headers
+	// do request
+	// return response
+	url := g.buildURL(q)
 	req, err := http.NewRequest("GET", url, nil)
 	check(err)
+	// make more generic, create option to set multiple headers
+	setHeader(req, "Authorization", g.Ssl.Credentials)
 
-	if credentials != "" {
-		// set header
-		encoded := base64.StdEncoding.EncodeToString([]byte(credentials))
-		req.Header.Add("Authorization", "Basic "+encoded)
-	}
-
-	response, err := client.Do(req)
+	res, err := client.Do(req)
 	check(err)
+
 	// parsing response
-	bytes := getBytes(response)
-	logMessage("   - raw response: %+v\n", string(bytes))
+	bytes := getBytes(res)
+	Log.Debugf("raw response: %+v\n", string(bytes))
 
 	var gr []GraphiteResponse
 	json.Unmarshal(bytes, &gr)
-	// check(marshallError)
-	logMessage("   - graphite response: %+v", gr)
+
+	Log.Debugf("graphite response: %+v", gr)
 	return gr
+}
+
+func (g Graphite) buildURL(query string) string {
+	url := g.URL
+	if !strings.HasSuffix(url, "/") {
+		url += "/"
+	}
+	url += "render?target=" + query + "&format=json&from=" + getFromTime(120)
+	Log.Infof("query url: %v", url)
+	return url
+}
+
+func setHeader(req *http.Request, key string, value string) {
+	encoded := base64.StdEncoding.EncodeToString([]byte(value))
+	req.Header.Add(key, "Basic "+encoded)
+}
+
+func getFromTime(offset int64) string {
+	t := time.Now().Unix()
+	unix := time.Now().Unix() - offset
+	Log.Infof("now: %v, query time (now-offset(%v)): %v", t, offset, unix)
+	return fmt.Sprintf("%v", unix)
 }
 
 func (gr GraphiteResponse) getLastValue() (float64, bool) {
@@ -140,7 +112,7 @@ func (gr GraphiteResponse) getLastValue() (float64, bool) {
 		dp := gr.Datapoints[i]
 		value := dp[0]
 		time := dp[1]
-		logMessage("   - %v | value: %v, time: %v", i, value, time)
+		Log.Infof("value: %v, time: %v", value, time)
 		if value != 0 {
 			returnValue = value
 			return value, false

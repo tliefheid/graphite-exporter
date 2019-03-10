@@ -4,46 +4,26 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func findGauge(name string) (bool, prometheus.GaugeVec) {
-	for k, v := range gauges {
-		if k == name {
-			logMessage(" - found a gauge")
-			return true, v
-		}
-	}
-	return false, prometheus.GaugeVec{}
-}
-
-func buildGauge(m Metric) prometheus.GaugeVec {
-	labels := m.Labels
+func buildPrometheusGauge(name string, ns string, labels []string) prometheus.GaugeVec {
+	// create map from the labels
 	lblMap := make(map[string]string)
 	for _, lbl := range labels {
-		key, val := getKeyValue(lbl, ":")
-		lblMap[key] = val
+		k, v := getKeyValue(lbl, ":")
+		lblMap[k] = v
 	}
+
 	g := prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Namespace:   m.Namespace,
+			Namespace:   ns,
 			ConstLabels: lblMap,
-			Name:        m.Name,
+			Name:        name,
 		},
 		[]string{
 			"target",
 		},
 	)
+
+	Log.Debug("created new gauge with name: %v", name)
 	prometheus.MustRegister(g)
-	gauges[m.Name] = *g
-	logMessage("   - new gauge build complete: %s", m.Name)
 	return *g
-}
-
-func getGauge(m Metric) prometheus.GaugeVec {
-	logMessage("   - getGauge() for: %s", m.Name)
-	name := trimAndReplace(m.Name)
-	found, g := findGauge(name)
-	if found {
-		return g
-	}
-	return buildGauge(m)
-
 }
