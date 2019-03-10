@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -52,8 +53,7 @@ func main() {
 			</html>`))
 	})
 	Log.Info("Starting http server")
-	Log.Critical(http.ListenAndServe(getHTTPPort(), nil))
-
+	log.Fatal(http.ListenAndServe(getHTTPPort(), nil))
 }
 
 func check(e error) {

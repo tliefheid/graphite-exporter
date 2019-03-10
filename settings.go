@@ -14,11 +14,14 @@ var (
 	targets   = make(map[string]Target)
 )
 
+// Ssl - ssl config
 type Ssl struct {
 	Credentials string `yaml:"credentials,omitempty"`
 	Certificate string `yaml:"certificate,omitempty"`
 	SkipTLS     bool   `yaml:"skip_tls,omitempty"`
 }
+
+// Graphite - graphite config
 type Graphite struct {
 	Name      string   `yaml:"name"`
 	URL       string   `yaml:"url"`
@@ -26,6 +29,8 @@ type Graphite struct {
 	Ssl       Ssl      `yaml:"ssl,omitempty"`
 	Namespace string   `yaml:"namespace,omitempty"`
 }
+
+// Target - target config
 type Target struct {
 	Name         string   `yaml:"name"`
 	GraphiteName string   `yaml:"graphite"`
@@ -44,6 +49,7 @@ type config struct {
 	Targets  []Target   `yaml:"targets"`
 }
 
+// GraphiteResponse - response object for graphite queries
 type GraphiteResponse struct {
 	Target string `json:"target"`
 	Tags   struct {
