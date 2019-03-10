@@ -10,6 +10,7 @@
 - ~~make metric endpoint customizable~~
 - ~~ssl/tls support~~
 - time offset for graphite
+- ~~clean up settings --> create new settings mapper / single global settings controller thingy~~
 - add custom http headers
 - custom endpoint with specific metrics
 - set config file location
@@ -18,6 +19,7 @@
 
 endpoint: /metrics/foo
 will query only the targets that contain the name foo and only see those metrics
+
 
 ## Wildcard label idea
 
