@@ -1,4 +1,4 @@
-FROM golang:1.11.5-alpine as builder
+FROM golang:1.12.1-alpine as builder
 COPY . /go/src/toml-dev/graphite-exporter
 WORKDIR /go/src/toml-dev/graphite-exporter 
 RUN apk update && apk add --no-cache git
