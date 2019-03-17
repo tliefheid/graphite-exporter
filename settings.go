@@ -28,7 +28,7 @@ type Graphite struct {
 	Labels    []string `yaml:"labels,omitempty"`
 	Ssl       Ssl      `yaml:"ssl,omitempty"`
 	Namespace string   `yaml:"namespace,omitempty"`
-	Offset int `yaml:"offset,omitempty"`
+	Offset    int      `yaml:"offset,omitempty"`
 }
 
 // Target - target config
@@ -38,6 +38,7 @@ type Target struct {
 	Query        string   `yaml:"query"`
 	Labels       []string `yaml:"labels,omitempty"`
 	Namespace    string   `yaml:"namespace,omitempty"`
+	Wildcards    []string `yaml:"wildcards,omitempty"`
 }
 type server struct {
 	Port     int    `yaml:"port,omitempty"`
@@ -98,7 +99,6 @@ func getConfig() {
 			s := fmt.Sprintf("searched for graphite (%v) but couldnt find it for target (%v)", target.GraphiteName, target.Name)
 			panic(s)
 		}
-
 		target.init(g)
 	}
 }

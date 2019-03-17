@@ -4,10 +4,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-func buildPrometheusGauge(name string, ns string, labels []string) prometheus.GaugeVec {
+func buildPrometheusGauge(name string, ns string, constantLabels []string, customLabels []string) prometheus.GaugeVec {
 	// create map from the labels
 	lblMap := make(map[string]string)
-	for _, lbl := range labels {
+	for _, lbl := range constantLabels {
 		k, v := getKeyValue(lbl, ":")
 		lblMap[k] = v
 	}
@@ -18,9 +18,7 @@ func buildPrometheusGauge(name string, ns string, labels []string) prometheus.Ga
 			ConstLabels: lblMap,
 			Name:        name,
 		},
-		[]string{
-			"target",
-		},
+		customLabels,
 	)
 
 	Log.Debug("created new gauge with name: %v", name)

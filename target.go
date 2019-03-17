@@ -1,6 +1,9 @@
 package main
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -13,10 +16,15 @@ func (t Target) init(g Graphite) {
 	// create ref to graphite
 	// build gauge
 	graphite = g
-	// TODO: check if labels give errors
-	labels := append(t.Labels, graphite.Labels...)
+	// TODO: check if labels give errors and no duplicate labels
+	constantLabels := append(t.Labels, graphite.Labels...)
+
 	ns := t.getNamespaces()
-	gauge = buildPrometheusGauge(t.Name, ns, labels)
+
+	wildcardValues := getValuesFromArray(t.Wildcards, ":")
+	customLabels := append(wildcardValues, "target")
+
+	gauge = buildPrometheusGauge(t.Name, ns, constantLabels, customLabels)
 }
 
 func (t Target) getMetrics() {
@@ -31,19 +39,34 @@ func (t Target) getMetrics() {
 	}
 
 	for _, data := range res {
-		target := trimAndReplace(data.Target)
+		customLabels := t.getWildcardValues(data)
+		Log.Debugf("Custom labels: %v\n", customLabels)
+
 		val, fail := data.getLastValue()
-		Log.Infof("value: %v or failed (%v) for target: %v\n", val, fail, target)
+		Log.Infof("getLastValue: failed?: '%v', value: %v for target: '%v'\n", fail, val, data.Target)
 		if fail {
 			Log.Info("no data found")
 		} else {
 			Log.Debug("setting value to gauge")
-			gauge.WithLabelValues(target).Set(val)
+			gauge.WithLabelValues(customLabels...).Set(val)
 		}
 	}
-	// fmt.Printf("response: %v\n", res)
 }
 
+func (t Target) getWildcardValues(data GraphiteResponse) []string {
+	var output []string
+	target := trimAndReplace(data.Target)
+	sliced := strings.Split(target, ".")
+	keys := getKeysFromArray(t.Wildcards, ":")
+	for _, k := range keys {
+		i, _ := strconv.Atoi(k)
+		val := sliced[i]
+		trimAndReplaceRef(&val)
+		output = append(output, val)
+	}
+	output = append(output, target)
+	return output
+}
 func (t Target) getNamespaces() string {
 	defaultNs := "graphite_exporter"
 	ns := defaultNs
