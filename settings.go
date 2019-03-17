@@ -28,6 +28,7 @@ type Graphite struct {
 	Labels    []string `yaml:"labels,omitempty"`
 	Ssl       Ssl      `yaml:"ssl,omitempty"`
 	Namespace string   `yaml:"namespace,omitempty"`
+	Offset int `yaml:"offset,omitempty"`
 }
 
 // Target - target config

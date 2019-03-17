@@ -89,7 +89,7 @@ func (g Graphite) buildURL(query string) string {
 	if !strings.HasSuffix(url, "/") {
 		url += "/"
 	}
-	url += "render?target=" + query + "&format=json&from=" + getFromTime(120)
+	url += "render?target=" + query + "&format=json&from=" + getFromTime(g.Offset)
 	Log.Infof("query url: %v", url)
 	return url
 }
@@ -99,9 +99,12 @@ func setHeader(req *http.Request, key string, value string) {
 	req.Header.Add(key, "Basic "+encoded)
 }
 
-func getFromTime(offset int64) string {
+func getFromTime(offset int) string {
+	if offset <= 0 {
+		offset = 60
+	}
 	t := time.Now().Unix()
-	unix := time.Now().Unix() - offset
+	unix := time.Now().Unix() - int64(offset)
 	Log.Infof("now: %v, query time (now-offset(%v)): %v", t, offset, unix)
 	return fmt.Sprintf("%v", unix)
 }

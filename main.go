@@ -13,7 +13,7 @@ import (
 var (
 	// Log - use same logger throughout the project
 	Log          = logging.MustGetLogger("logger")
-	format       = logging.MustStringFormatter(`%{color}%{time:15:04:05.000} %{level} %{shortfunc}%{color:reset} | %{message}`)
+	format       = logging.MustStringFormatter(`%{color}%{time:15:04:05.000} %{level} %{shortfunc}%{color:reset} - %{message}`)
 	backend1     = logging.NewLogBackend(os.Stdout, "", 0)
 	formattedLog = logging.NewBackendFormatter(backend1, format)
 )

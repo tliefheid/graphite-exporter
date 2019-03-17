@@ -61,6 +61,7 @@ graphite:
   - name: local
     url: http://localhost:1234/
     namespace: "graphite_exporter"
+    offset: 60
   - name: external
     url: https://graphite.instance.com/1234
     ssl:
@@ -93,6 +94,7 @@ targets:
 - graphite: A sequence (array) of graphite connections.
   - name: Name of the graphite connection. Give them a unique name.
   - url: URL of the graphite instance.
+  - *offset*: Query graphite with the `from` set to `now-offset`, default = 60s
   - *namespace*: Default prefix for this graphite instance. The namespace will be prefixed to the metric name.
   - *labels*: Add fixed labels to your metrics
   - *ssl*: Config for SSL/TLS.
