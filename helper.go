@@ -12,6 +12,7 @@ func trimAndReplace(s string) string {
 	s = strings.Trim(s, " ")
 	old := s
 	s = strings.Replace(s, " ", "_", -1)
+	s = strings.Replace(s, "-", "_", -1)
 	new := s
 	if new != old {
 		fmt.Printf("WARN: parsed invalid config '%v' to valid '%v'. Change this in your config file!\n", old, new)
