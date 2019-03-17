@@ -4,7 +4,7 @@
 - custom seperator for labels
 - ~~add labels at global level~~
 - ~~make namespace customizable, both globally and per metric~~
-- wildcard labels
+- ~~wildcard labels~~
 - add tests
 - ~~add Dockerfile~~
 - ~~make metric endpoint customizable~~
