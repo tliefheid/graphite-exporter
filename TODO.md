@@ -9,7 +9,7 @@
 - ~~add Dockerfile~~
 - ~~make metric endpoint customizable~~
 - ~~ssl/tls support~~
-- time offset for graphite
+- ~~time offset for graphite~~
 - ~~clean up settings --> create new settings mapper / single global settings controller thingy~~
 - add custom http headers
 - custom endpoint with specific metrics
