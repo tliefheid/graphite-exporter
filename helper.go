@@ -31,7 +31,22 @@ func getKeyValue(input string, sep string) (string, string) {
 	val := trimAndReplace(s[1])
 	return key, val
 }
-
+func getKeysFromArray(input []string, sep string) []string {
+	var output []string
+	for _, kv := range input {
+		k, _ := getKeyValue(kv, sep)
+		output = append(output, k)
+	}
+	return output
+}
+func getValuesFromArray(input []string, sep string) []string {
+	var output []string
+	for _, kv := range input {
+		_, v := getKeyValue(kv, sep)
+		output = append(output, v)
+	}
+	return output
+}
 func exists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {

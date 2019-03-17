@@ -83,7 +83,10 @@ targets:
     namespace: "metric_namespace"
   - name: bar
     graphite: local
-    query: "some.other.*.query"
+    query: "sensors.basement.dht22.temperature"
+    wildcards:
+      - "1: location"
+      - "2: sensor_type"
   - name: foobar
     graphite: external
     namespace: foobar
@@ -112,7 +115,8 @@ targets:
   - graphite: The name of the graphite connection to use.
   - query: The graphite query to execute. Wildcard `*` is allowed.
   - *namespace*: Default prefix for this target. The namespace will be prefixed to the metric name.
-  - *labels*: Add fixed labels to your metrics
+  - *labels*: Add fixed labels to your metrics. 
+  - *wildcards*: Add labels based on your query. Query is split on `.`. Starts counting at 0. See [wildcard labels](#wildcard-labels) below for more info.
 
 keys in *italics* are optional
 
@@ -129,4 +133,35 @@ graphite_exporter_foo{label1="value1", target="some.graphite.query.query1"} 10.0
 graphite_exporter_foo{label1="value1", target="some.graphite.query.query2"} 20.0
 graphite_exporter_bar{label1="value1", label2="value2", target="some.other.graphite.query"} 42.0
 graphite_exporter_external_graphite{target="external.graphite.query"} 65.0
+```
+
+### Wildcard labels
+
+For example: query `sensors.attic.dht22.*` returns the following data:
+
+- `sensors.attic.dht22.temperature`: 18
+- `sensors.attic.dht22.humidity`: 38
+
+You might want to add some tags based on the values in the query, like: `type: <temperature|humidity>` and `location: attic`.
+
+You can do this by using the `wildcard` setting for a Target. Specify the index and the key-name for the labels you want to create.
+
+config:
+
+```YAML
+targets:
+  - name: sensor
+    graphite: local
+    query: "sensors.attic.dht22.*"
+    wildcards:
+      - "1: location"
+      - "2: sensor_type"
+      - "3: type"
+```
+
+result:
+
+```GO
+graphite_exporter_sensors{location="attic", sensor_type="dht22", target="sensors.attic.dht22.humidity",type="humidity"} 36.0
+graphite_exporter_pi_sensors{location="attic", sensor_type="dht22", target="sensors.attic.dht22.temperature",type="temperature"} 18.0
 ```
