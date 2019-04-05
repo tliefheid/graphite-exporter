@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -19,7 +18,6 @@ var (
 )
 
 func collectMetrics() {
-	fmt.Println()
 	for _, t := range cfg.Targets {
 		t.getMetrics()
 	}
