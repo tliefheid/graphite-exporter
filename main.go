@@ -6,7 +6,7 @@ import (
 	"os"
 
 	logging "github.com/op/go-logging"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -40,7 +40,7 @@ func main() {
 
 	collectMetrics()
 
-	http.Handle(getHTTPEndpoint(), httpWrapper(prometheus.Handler()))
+	http.Handle(getHTTPEndpoint(), httpWrapper(promhttp.Handler()))
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`<html>
 			<head><title>Graphite-Exporter</title></head>
