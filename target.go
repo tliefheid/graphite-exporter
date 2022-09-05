@@ -48,8 +48,8 @@ func (t Target) getMetrics() {
 			Log.Info("no data found")
 		} else {
 			Log.Debug("setting value to gauge")
-			gauge.WithLabelValues(customLabels...).Set(val)
 		}
+		gauge.WithLabelValues(customLabels...).Set(val)
 	}
 }
 

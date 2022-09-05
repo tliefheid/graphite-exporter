@@ -57,7 +57,7 @@ type GraphiteResponse struct {
 	Tags   struct {
 		Name string `json:"name"`
 	} `json:"tags"`
-	Datapoints [][]float64 `json:"datapoints"`
+	Datapoints [][]*float64 `json:"datapoints"`
 }
 
 func getConfig() {
