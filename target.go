@@ -8,23 +8,21 @@ import (
 )
 
 var (
-	graphite = Graphite{}
-	gauge    = prometheus.GaugeVec{}
+	gauges    = make(map[string]prometheus.GaugeVec)
 )
 
 func (t Target) init(g Graphite) {
 	// create ref to graphite
 	// build gauge
-	graphite = g
 	// TODO: check if labels give errors and no duplicate labels
-	constantLabels := append(t.Labels, graphite.Labels...)
+	constantLabels := append(t.Labels, g.Labels...)
 
 	ns := t.getNamespaces()
 
 	wildcardValues := getValuesFromArray(t.Wildcards, ":")
 	customLabels := append(wildcardValues, "target")
 
-	gauge = buildPrometheusGauge(t.Name, ns, constantLabels, customLabels)
+	gauges[t.Name] = buildPrometheusGauge(t.Name, ns, constantLabels, customLabels)
 }
 
 func (t Target) getMetrics() {
@@ -32,7 +30,7 @@ func (t Target) getMetrics() {
 	// query graphite
 	// generate response
 	// set value of gauge
-	res := graphite.query(t.Query)
+	res := graphites[t.GraphiteName].query(t.Query)
 
 	if len(res) < 1 {
 		Log.Noticef("no data retreived from graphite for Target: %v", t.Name)
@@ -44,6 +42,7 @@ func (t Target) getMetrics() {
 
 		val, fail := data.getLastValue()
 		Log.Infof("getLastValue: failed?: '%v', value: %v for target: '%v'\n", fail, val, data.Target)
+		gauge := gauges[t.Name]
 		if fail {
 			Log.Info("no data found")
 		} else {
@@ -70,8 +69,8 @@ func (t Target) getWildcardValues(data GraphiteResponse) []string {
 func (t Target) getNamespaces() string {
 	defaultNs := "graphite_exporter"
 	ns := defaultNs
-	if graphite.Namespace != "" {
-		ns = graphite.Namespace
+	if graphites[t.GraphiteName].Namespace != "" {
+		ns = graphites[t.GraphiteName].Namespace
 	}
 	if t.Namespace != "" {
 		if ns == defaultNs {
