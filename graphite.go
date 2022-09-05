@@ -110,17 +110,15 @@ func getFromTime(offset int) string {
 }
 
 func (gr GraphiteResponse) getLastValue() (float64, bool) {
-	returnValue := float64(-1)
 	for i := len(gr.Datapoints) - 1; i >= 0; i-- {
 		dp := gr.Datapoints[i]
-		value := dp[0]
-		time := dp[1]
-		Log.Infof("value: %v, time: %v", value, time)
-		if value != 0 {
-			returnValue = value
-			return value, false
+		if dp[0] != nil {
+        value := *dp[0]
+        time := *dp[1]
+        Log.Infof("value: %v, time: %v", value, time)
+			  return value, false
 		}
 	}
 
-	return returnValue, true
+	return float64(-1), true
 }
